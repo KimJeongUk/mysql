@@ -11,28 +11,36 @@ app.use(fileupload());
 app.engine('hbs', require('exphbs'));
 app.set('view engine', 'hbs');
 
-app.get('', (req,res)=>{
+app.get('', (req, res) => {
     res.render('index');
 })
 
-app.post('', (req,res)=>{
-    
-let sampleFile;
-let uploadPath;
+app.post('', (req, res) => {
 
-if(!req.files || Object.keys(req.files).length == 0)
-{
-    return res.status(400).send("파일이 업로드 되지 않았습니다.");
-}
+    let sampleFile;
+    let uploadPath;
 
-sampleFile = req.files.sampleFile;
-console.log(sampleFile);
+    if (!req.files || Object.keys(req.files).length == 0) {
+        return res.status(400).send("파일이 업로드 되지 않았습니다.");
+    }
+
+    sampleFile = req.files.sampleFile;
+    uploadPath = __dirname + '/upload/' + sampleFile.name;
+
+    console.log(sampleFile);
+
+    sampleFile.mv(uploadPath, function (err) {
+        if (err) return res.status(500).send(err);
 
 
+        res.send("파일 업로드!");
+
+    }
+    );
 
 
 
 })
 
 
-app.listen(port, ()=> console.log(`${port} 서버 포트가 실행 중입니다.`));
+app.listen(port, () => console.log(`${port} 서버 포트가 실행 중입니다.`));
