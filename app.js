@@ -2,7 +2,6 @@ const express = require("express");
 const exphbs = require("express-handlebars");
 const fileupload = require("express-fileupload");
 const mysql = require("mysql");
-const Connection = require("mysql/lib/Connection");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -14,46 +13,25 @@ app.use(fileupload());
 app.use(express.static('public'))
 app.use(express.static('upload'))
 
-app.engine('hbs', require('exphbs'));
-app.set('view engine', 'hbs');
+const handlebars = exphbs.create({ extname: '.hbs',});
+app.engine('.hbs', handlebars.engine);
+app.set('view engine', '.hbs');
 
 //connection pool
-const pool = mysql.createPool({
-    connectionLimit :10,
+var connection = mysql.createPool({
     host: '127.0.0.1',
     user: 'root',
-    port: '3306',
     password: '123123r',
     database: 'userprofile',
 });
 
-pool.getConnection((err, connection) =>{
-    if(err) throw err // 연결 X
-    console.log("DB 연결 성공");
-
-});
-
-
 
 app.get('', (req, res) => {
-    res.render('index');
-
-
-    pool.getConnection((err, connection) =>{
-        if(err) throw err // 연결 X
-        console.log("DB 연결 성공");
-        
-        connection.query('SELECT * FROM user WHERE id ="1"', (err, rows)=>{
-            // once done, release connection
-            connection.release();
-
-            if(!err){
-                res.render('index');
-            }
-        });
+    connection.query('SELECT * FROM user WHERE id = "1"', (err, rows) => {
+      if (!err) {
+        res.render('index', { rows });
+      }
     });
-    
-
 });
 
 app.post('', (req, res) => {
@@ -73,9 +51,13 @@ app.post('', (req, res) => {
     sampleFile.mv(uploadPath, function (err) {
         if (err) return res.status(500).send(err);
 
-
-        res.send("파일 업로드!");
-
+        connection.query('UPDATE user SET profile_image = ? WHERE id ="1"', [sampleFile.name], (err, rows) => {
+        if (!err) {
+          res.redirect('/');
+        } else {
+          console.log(err);
+        }
+      });
     }
     );
 
